@@ -6,8 +6,11 @@ Scheda embedded per riportare in vita l'Emiglio, il robot giocattolo degli anni 
 ESP32-WROOM-32E, driver motori TB6612FNG, amplificatore I2S MAX98357A, display TFT
 ST7735S e ricevitore IR: tutto su un singolo PCB.
 
-📐 **Progetto hardware (schematico + PCB) su OSHWLab:**
+📐 **Progetto hardware (schematico + PCB):**
 <https://oshwlab.com/alessandro2001/project_qgcpzeag>
+
+✏️ **Articolo sul blog:**
+<https://alessandrobonomo28.github.io/posts/Trasformare-Emiglio-in-un-AI-assistant-5/#-ordina-qui-lemiglio-modchip>
 
 Questo repo contiene il firmware; schematico, layout e file di produzione vivono
 sul progetto OSHWLab, da cui si può aprire tutto direttamente in EasyEDA o
