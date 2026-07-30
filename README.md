@@ -6,22 +6,51 @@ Scheda embedded per riportare in vita l'Emiglio, il robot giocattolo degli anni 
 ESP32-WROOM-32E, driver motori TB6612FNG, amplificatore I2S MAX98357A, display TFT
 ST7735S e ricevitore IR: tutto su un singolo PCB.
 
+📐 **Progetto hardware (schematico + PCB) su OSHWLab:**
+<https://oshwlab.com/alessandro2001/project_qgcpzeag>
+
+Questo repo contiene il firmware; schematico, layout e file di produzione vivono
+sul progetto OSHWLab, da cui si può aprire tutto direttamente in EasyEDA o
+ordinare il PCB.
+
 ---
 
 ## Sponsor: PCBWay
 
 <p align="center">
-  <a href="https://www.pcbway.com/">
+  <a href="https://www.pcbway.com/project/shareproject/emiglio_modchip_assembly_b18694d1.html">
     <img src="052_PCBWAY-1250535807.jpg" alt="PCBWay" width="380">
   </a>
 </p>
+
+<p align="center">
+  <b>
+    🛒 Ordina la scheda già pronta →
+    <a href="https://www.pcbway.com/project/shareproject/emiglio_modchip_assembly_b18694d1.html">
+      emiglio modchip + assembly su PCBWay
+    </a>
+  </b>
+</p>
+
+Il progetto condiviso contiene i file di produzione già impostati: basta
+**Add to cart** e il PCB arriva con le specifiche giuste, senza dover configurare
+niente a mano.
+
+| Specifica | Valore |
+|---|---|
+| Strati | 2 |
+| Dimensioni | 38.2 × 56.9 mm |
+| Materiale | FR-4, spessore 1.6 mm |
+| Finitura | HASL (con stagno-piombo) |
+| Solder mask | nera |
+| Serigrafia | bianca |
 
 **Proud to announce a new sponsorship by PCBWay!**
 
 I PCB di questo progetto sono prodotti da [**PCBWay**](https://www.pcbway.com/):
 prototipi di alta qualità, assemblaggio SMT, stencil e servizio di verifica DFM
-gratuito prima della messa in produzione. Se vuoi ordinare la tua Emiglio modchip
-o qualsiasi altra scheda, parti da qui → **<https://www.pcbway.com/>**
+gratuito prima della messa in produzione. Per una scheda qualsiasi si parte da
+**<https://www.pcbway.com/>**; per *questa* scheda c'è il link diretto qui sopra.
 
 Lo sponsor ha anche un posto d'onore nel firmware: lo sketch
 [`pcbway/pcbway.ino`](pcbway/pcbway.ino) mostra il logo animato sul display TFT
@@ -34,7 +63,8 @@ della scheda.
 ![Schematico Emiglio modchip](Schematic_emiglio-modchip_2026-07-28.png)
 
 File: [`Schematic_emiglio-modchip_2026-07-28.png`](Schematic_emiglio-modchip_2026-07-28.png)
-— rev. 1.0, disegnato in EasyEDA.
+— rev. 1.0, disegnato in EasyEDA. Sorgente editabile e netlist:
+[progetto su OSHWLab](https://oshwlab.com/alessandro2001/project_qgcpzeag).
 
 Blocchi presenti sulla scheda:
 
@@ -77,9 +107,22 @@ ricevitore `IR-RCV` sul bordo inferiore, i pulsanti `RESET` / `BOOT` /
 gli occhi del robot. Sul silkscreen ci sono anche il logo *goodman industries* e un
 saluto a Johnny 5.
 
-Foto della scheda prodotta e montata: vedi l'immagine di apertura
-([`sponsor.jpg`](sponsor.jpg)) — a destra il retro con la serigrafia
-*Emiglio modchip v1.0*, a sinistra il fronte popolato.
+### Render 3D
+
+![Render 3D della scheda Emiglio modchip](3d.png)
+
+Vista dal lato componenti, prima della produzione. Da qui si legge la disposizione
+reale meglio che dal layout: il modulo ESP32 in alto a sinistra con l'antenna a
+serpentina che sporge oltre il bordo del rame, il TB6612FNG (`U2`, SSOP-24) in alto a
+destra vicino ai morsetti `BAT+ / BAT-`, il CH340C (SOP-16) al centro accanto alla
+USB-C, il regolatore AMS1117 in SOT-223 e il MAX98357A nel QFN quadrato in basso a
+sinistra, a fianco del connettore `+ SPK -`. Sul bordo inferiore spicca la cupola
+bianca del ricevitore IR, e a destra i due pulsanti `RESET` e `BOOT`.
+
+Confronto utile: il render mostra la scheda come dovrebbe venire, l'immagine di
+apertura ([`sponsor.jpg`](sponsor.jpg)) mostra come è venuta davvero — stessa
+disposizione, stessi ingombri, con in più il retro serigrafato
+*Emiglio modchip v1.0*.
 
 ---
 
@@ -157,9 +200,39 @@ PlatformIO.
 | Adafruit BusIO | Adafruit | <https://github.com/adafruit/Adafruit_BusIO> | dipendenza di GFX/ST7735 |
 | IRremote | Armin Joachimsmeyer (z3t0) | <https://github.com/Arduino-IRremote/Arduino-IRremote> | `test_motori_minimo`, `telecom1` |
 | ESP32-A2DP | Phil Schatzmann | <https://github.com/pschatzmann/ESP32-A2DP> | `emiglio_speaker_max98357a` |
+| arduino-audio-tools | Phil Schatzmann | <https://github.com/pschatzmann/arduino-audio-tools> | stack audio, agganciata da ESP32-A2DP |
+| ESP8266Audio | Earle F. Philhower III | <https://github.com/earlephilhower/ESP8266Audio> | stack audio, integrata da arduino-audio-tools |
 
 `SPI`, `WiFi`, `ESP_I2S`, `driver/i2s.h`, `esp_bt.h` e `esp_task_wdt.h` arrivano
 già con il core ESP32, non serve installare nulla.
+
+### Come si incastrano le librerie audio
+
+Nessuno sketch fa `#include <AudioTools.h>` o `#include <AudioOutput.h>`
+direttamente, ma le due librerie fanno comunque parte della toolchain audio e vanno
+installate — ESP32-A2DP le rileva da sola:
+
+```cpp
+// ESP32-A2DP/src/config.h
+#if __has_include("AudioTools.h")
+#  define A2DP_I2S_AUDIOTOOLS 1
+```
+
+Se **arduino-audio-tools** è presente nelle librerie, questa `__has_include` scatta
+e `BluetoothA2DPOutput.h` include `AudioTools.h`, abilitando il percorso
+`audio_tools::AudioOutput` del sink (`set_output()`, il costruttore che prende un
+`AudioOutput&`). Di conseguenza **installare o rimuovere la libreria cambia come
+viene compilato lo sketch A2DP, anche senza toccare una riga di codice**: è la
+classica sorpresa quando la stessa sketch compila su una macchina e non sull'altra.
+
+**ESP8266Audio** è il ponte verso i generatori e le classi `AudioOutput` storiche,
+integrata da audio-tools in `AudioTools/AudioLibs/AudioESP8266.h`. Nata per
+l'ESP8266, funziona anche su ESP32 e serve quando si vuole riprodurre MP3/WAV/RTTTL
+invece del solo streaming A2DP — la strada naturale per dare una voce a Emiglio
+oltre ai toni generati con `sin()` in `telecom1`.
+
+Versioni verificate su questo progetto: ESP32-A2DP 1.8.11, arduino-audio-tools
+1.2.5, ESP8266Audio 2.4.1, IRremote 4.7.1.
 
 ### PlatformIO
 
@@ -171,11 +244,16 @@ framework = arduino
 monitor_speed = 115200
 board_build.f_cpu = 240000000L
 lib_deps =
-    z3t0/IRremote@^4.4.1
+    z3t0/IRremote@^4.7.1
     adafruit/Adafruit GFX Library
     adafruit/Adafruit ST7735 and ST7789 Library
     pschatzmann/ESP32-A2DP
+    https://github.com/pschatzmann/arduino-audio-tools
+    earlephilhower/ESP8266Audio
 ```
+
+arduino-audio-tools va referenziata via URL git: non è pubblicata nel registry di
+PlatformIO.
 
 ## Compilazione con l'IDE Arduino
 
